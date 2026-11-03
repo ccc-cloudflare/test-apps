@@ -255,9 +255,11 @@ textarea {
       const thinking = m.reasoning ? `<details class="thinking"><summary>模型的思考過程</summary><div>${esc(m.reasoning)}</div></details>` : '';
       const drafts = m.draft ? `<details class="thinking"><summary>檢查前的草稿</summary><div>${esc(m.draft)}</div></details>` : '';
       // 模型自己呼叫檢查工具的紀錄
-      const tools = (m.tools || []).length ? `<div class="tools">${m.tools.map((t, k) => (t.ok
-        ? `<span class="ok">🔍 第 ${k + 1} 次檢查：✓ 全部在字表內</span>`
-        : `<span class="warn">🔍 第 ${k + 1} 次檢查：✗ ${esc(t.chars.join('、'))}</span>`)).join('')}</div>` : '';
+      let n = 0;  // 檢查的次數（查詞典不算）
+      const tools = (m.tools || []).length ? `<div class="tools">${m.tools.map((t) => (t.lookup
+        ? `<span>📖 查詞典：${esc(t.lookup.join('、'))}</span>`
+        : t.ok ? `<span class="ok">🔍 第 ${++n} 次檢查：✓ 全部在字表內</span>`
+          : `<span class="warn">🔍 第 ${++n} 次檢查：✗ ${esc(t.chars.join('、'))}</span>`)).join('')}</div>` : '';
       bubble.innerHTML = thinking + tools + drafts + markdown(m.content || '', blocks) + (m.error ? `<p class="error">${esc(m.error)}</p>` : '');
       bubble.querySelectorAll('.minilang').forEach((el) => {
         const text = blocks[Number(el.dataset.block)];
@@ -318,6 +320,10 @@ textarea {
           if (msg.type === 'reasoning') { reply.reasoning += msg.text; $('status').textContent = '思考中…'; }
           if (msg.type === 'content') { reply.content += msg.text; $('status').textContent = '回答中…'; }
           if (msg.type === 'error') reply.error = msg.text;
+          if (msg.type === 'lookup') {
+            reply.tools = (reply.tools || []).concat([{ lookup: msg.words }]);
+            $('status').textContent = `查詞典：${msg.words.join('、')}…`;
+          }
           if (msg.type === 'tool') {
             // 檢查之前寫的內容是草稿，收起來；畫面只留檢查後的回答
             reply.tools = (reply.tools || []).concat([{ ok: msg.ok, chars: msg.chars }]);

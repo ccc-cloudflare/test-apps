@@ -48,19 +48,9 @@ def lexicon_rows():
     return rows
 
 
-def lexicon_appendix():
-    """整份詞典，一行一個：一般中文 → Mini-Lang（外來語附上第一次出現時的說明）。"""
-    lines = []
-    for r in lexicon_rows():
-        if r['中文'] == r['Mini-Lang']:
-            continue  # 本詞不用查
-        note = f"（{r['說明']}）" if r['說明'] else ''
-        lines.append(f"{r['中文']} → {r['Mini-Lang']}{note}")
-    return '## 附錄：詞典（一般中文 → Mini-Lang）\n\n' + '\n'.join(lines)
-
-
 def system_prompt():
-    return '\n\n'.join([section(PROMPTS / 'system.md'), section(PROMPTS / 'expert.md'), lexicon_appendix()])
+    # 詞典不放進提示詞：Worker 依對話內容只附上用得到的詞，其他讓模型用 lookup_word 查
+    return '\n\n'.join([section(PROMPTS / 'system.md'), section(PROMPTS / 'expert.md')])
 
 
 def pinyin():
@@ -131,7 +121,8 @@ def write_generated(charset, rows, prompt):
     out = ['// 從 mini-lm 專案同步（sync.py）；同步之後這裡就是原始檔，可以手改']
     for name, value in [('CHARSET', charset), ('SYSTEM_PROMPT', prompt)]:
         out.append(f'export const {name} = {json.dumps(value, ensure_ascii=False)};')
-    out.append(f'export const LEXICON = {json.dumps([[r["中文"], r["Mini-Lang"]] for r in rows], ensure_ascii=False)};')
+    # 詞典：[一般中文, Mini-Lang, 說明, 方式]，給 Worker 附上相關的詞與 lookup_word 工具用
+    out.append(f'export const LEXICON = {json.dumps([[r["中文"], r["Mini-Lang"], r["說明"], r["方式"]] for r in rows], ensure_ascii=False)};')
     (SRC / 'generated.js').write_text('\n'.join(out) + '\n', encoding='utf-8')
 
 

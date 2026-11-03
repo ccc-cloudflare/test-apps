@@ -1,5 +1,5 @@
 // Mini-Lang 專家的 Cloudflare Worker：
-//   /api/chat    串流對話（SSE），並在本機執行 check_minilang 工具的循環
+//   /api/chat    串流對話（SSE），並在 Worker 執行 check_minilang、lookup_word 工具的循環
 //   /api/status  模型與金鑰狀態
 //   其他路徑     靜態檔案（public/，由 Assets 提供）
 // 金鑰存在 Worker 的密鑰 NVIDIA_API_KEY 裡，不會送到瀏覽器。
@@ -11,7 +11,8 @@ const MODEL = 'z-ai/glm-5.3-flash';
 const REASONING_EFFORT = 'low';
 const MAX_TOKENS = 8192;
 const MAX_BODY = 200_000;  // 一次對話最多約 20 萬字元
-const MAX_TOOL_ROUNDS = 5;  // 一次回答最多呼叫幾次檢查工具
+const MAX_TOOL_ROUNDS = 5;  // 一次回答最多呼叫幾次工具（檢查、查詞典）
+const MAX_RELEVANT = 120;   // 系統提示詞最多附上幾條「對話中出現的詞」
 
 const HAN = /[\u4e00-\u9fff]/;
 const CHARSET_SET = new Set([...CHARSET]);
@@ -28,6 +29,19 @@ const TOOLS = [{
       type: 'object',
       properties: { text: { type: 'string', description: '要檢查的 Mini-Lang 文字（不含 minilang 區塊的標記）' } },
       required: ['text'],
+    },
+  },
+}, {
+  type: 'function',
+  function: {
+    name: 'lookup_word',
+    description: '查 Mini-Lang 詞典：一般中文的詞在 Mini-Lang 怎麼說。可以一次查好幾個詞。'
+                 + '回傳每個詞是否已經在字表內（可以直接寫），或詞典的標準說法（外來語會附上第一次出現時的說明）。'
+                 + '寫作或翻譯時，想用字表外的詞就先查。',
+    parameters: {
+      type: 'object',
+      properties: { words: { type: 'array', items: { type: 'string' }, description: '要查的一般中文詞，例如 ["比賽", "球員"]' } },
+      required: ['words'],
     },
   },
 }];
@@ -58,7 +72,33 @@ function checkMinilang(text) {
            message: '請只改寫含有這些字的句子，改完再檢查一次。' };
 }
 
+// ---------- 查詞典工具 ----------
+
+function lookupWord(words) {
+  const results = [];
+  for (const w of (Array.isArray(words) ? words : [words]).map((x) => String(x).trim()).filter(Boolean).slice(0, 20)) {
+    if (!unknownChars(w).length) { results.push({ word: w, in_charset: true, mini_lang: w, message: '字表內就有，直接寫' }); continue; }
+    const exact = LEXICON.find(([zh]) => zh === w);
+    if (exact) { results.push({ word: w, mini_lang: exact[1], note: exact[2], method: exact[3] }); continue; }
+    // 沒有完全相同的：找含有這個詞、或被這個詞包含的詞條
+    const similar = LEXICON.filter(([zh, mini]) => zh !== mini && (zh.includes(w) || w.includes(zh)))
+      .slice(0, 5).map(([zh, mini]) => ({ word: zh, mini_lang: mini }));
+    results.push({ word: w, found: false, similar, message: '詞典沒有這個詞；請依系統提示詞第 3 節，用描述或外來語說出來' });
+  }
+  return { results };
+}
+
 // ---------- 系統提示詞 ----------
+
+// 只附上對話中出現的詞（使用者的訊息）。整份詞典約 1.5 萬字，大部分用不到；其他詞讓模型用 lookup_word 查
+function relevantLexicon(messages) {
+  const text = messages.filter((m) => m.role === 'user').map((m) => m.content).join('\n');
+  const hits = LEXICON.filter(([zh, mini]) => zh !== mini && text.includes(zh))
+    .sort((a, b) => b[0].length - a[0].length).slice(0, MAX_RELEVANT);
+  if (!hits.length) return '## 相關詞典\n\n（使用者的訊息裡沒有詞典登記的詞。寫作時想用字表外的詞，用 lookup_word 查。）';
+  return '## 相關詞典（使用者的訊息中出現的詞；其他詞用 lookup_word 查）\n\n'
+    + hits.map(([zh, mini, note]) => `${zh} → ${mini}${note ? `（${note}）` : ''}`).join('\n');
+}
 
 // 有設定 PROMPTS KV 時先讀 KV，可以用 wrangler kv key put 更新提示詞而不用重新部署
 let cachedPrompt = null;
@@ -80,7 +120,7 @@ async function systemPrompt(env) {
 // ---------- NVIDIA API ----------
 
 // 呼叫模型一次，把思考與回答轉送給網頁；回傳模型要呼叫的工具（沒有就是空的）
-async function streamRound(key, convo, send) {
+async function streamRound(key, convo, send, tools = true) {
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Accept: 'text/event-stream' },
@@ -91,7 +131,7 @@ async function streamRound(key, convo, send) {
       max_tokens: MAX_TOKENS,
       temperature: 0.6,
       reasoning_effort: REASONING_EFFORT,
-      tools: TOOLS,
+      ...(tools ? { tools: TOOLS } : {}),
     }),
   });
   if (!res.ok || !res.body) {
@@ -164,20 +204,30 @@ function handleChat(request, env) {
         if (!messages.length) throw new Error('格式不對：沒有對話內容');
         if (JSON.stringify(messages).length > MAX_BODY) throw new Error('對話太長了，請開新的對話');
 
-        const convo = [{ role: 'system', content: await systemPrompt(env) }, ...messages];
+        const prompt = `${await systemPrompt(env)}\n\n${relevantLexicon(messages)}`;
+        const convo = [{ role: 'system', content: prompt }, ...messages];
+        let finished = false;
         for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
           const calls = await streamRound(key, convo, send);
-          if (!calls.length) break;
-          // 模型要檢查：在 Worker 執行，把結果交回給模型，再讓它繼續
+          if (!calls.length) { finished = true; break; }
+          // 模型要檢查或查詞典：在 Worker 執行，把結果交回給模型，再讓它繼續
           convo.push({ role: 'assistant', content: '', tool_calls: calls });
           for (const call of calls) {
-            let text = '';
-            try { text = JSON.parse(call.function.arguments || '{}').text || ''; } catch (e) { /* 空的檢查結果 */ }
-            const result = checkMinilang(text);
-            send({ type: 'tool', ok: result.ok, chars: (result.out_of_set || []).map((x) => x.char) });
+            let args = {};
+            try { args = JSON.parse(call.function.arguments || '{}'); } catch (e) { /* 空的參數 */ }
+            let result;
+            if (call.function.name === 'lookup_word') {
+              result = lookupWord(args.words || []);
+              send({ type: 'lookup', words: result.results.map((x) => x.word) });
+            } else {
+              result = checkMinilang(args.text || '');
+              send({ type: 'tool', ok: result.ok, chars: (result.out_of_set || []).map((x) => x.char) });
+            }
             convo.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) });
           }
         }
+        // 工具次數用完了還沒寫出答案：不給工具，請它直接寫出最後的答案
+        if (!finished) await streamRound(key, convo, send, false);
         send({ type: 'done' });
       } catch (e) {
         try { send({ type: 'error', text: e.message || String(e) }); } catch (f) { /* 使用者已關掉頁面 */ }

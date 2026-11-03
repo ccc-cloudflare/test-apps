@@ -17,8 +17,8 @@ Mini-Lang 專家：用 LLM（NVIDIA 的 GLM 5.3 Flash）回答 Mini-Lang 的問�
 
 | 檔案 | 說明 |
 |---|---|
-| `src/worker.js` | Worker：SSE 串流、檢查工具、靜態資產 |
-| `src/generated.js` | 字表、詞典與系統提示詞（原始檔，直接改也可以） |
+| `src/worker.js` | Worker：SSE 串流、檢查與查詞典工具、靜態資產 |
+| `src/generated.js` | 字表、詞典與系統提示詞（原始檔，直接改也可以）。詞典不放進提示詞：Worker 只附上對話中出現的詞，其他讓模型用 `lookup_word` 查 |
 | `public/` | 前端：專家頁、規則翻譯器、`data.js`（字表/詞典/拼音/範例）、翻譯引擎 |
 | `wrangler.jsonc` | Worker 設定（名稱、靜態資產目錄） |
 | `sync.py` | **可選**：從上游 mini-lm 專案同步前端與資料（見下方） |
