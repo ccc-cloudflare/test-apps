@@ -9,6 +9,8 @@
   }
 }
 * { box-sizing: border-box; }
+/* hidden 屬性要贏過 display 規則，畫面切換（多頁感）才有效 */
+[hidden] { display: none !important; }
 body {
   margin: 0; background: var(--bg); color: var(--text); line-height: 1.7;
   font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
@@ -111,3 +113,12 @@ table.report td.amount { font-weight: 600; color: var(--accent); }
   .cart { position: static; }
   .cards { grid-template-columns: 1fr; }
 }
+
+/* 成功提示（toast） */
+#toast {
+  position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 50;
+  background: var(--accent); color: #fff; border-radius: 999px; padding: 8px 18px;
+  font-size: 0.95rem; font-weight: 600; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  animation: toast-in 0.2s ease-out;
+}
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, -8px); } }

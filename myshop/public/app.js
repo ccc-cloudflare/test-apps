@@ -15,6 +15,16 @@
   let cart = new Map();          // productId -> qty
   let chosenTemplate = null;
 
+  // ---------- 提示訊息 ----------
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
+  }
+
   // ---------- API ----------
   async function api(path, options = {}) {
     const resp = await fetch(path, {
@@ -52,8 +62,14 @@
   $('a-go').addEventListener('click', async () => {
     const body = { email: $('a-email').value.trim(), password: $('a-pass').value, name: $('a-name').value.trim() };
     try {
-      if (authMode === 'signup') await api('/api/signup', { method: 'POST', body });
-      await api('/api/login', { method: 'POST', body });
+      if (authMode === 'signup') {
+        await api('/api/signup', { method: 'POST', body });
+        await api('/api/login', { method: 'POST', body });
+        toast(`註冊成功，歡迎${body.name ? '，' + body.name : ''}！接著開一家店吧。`);
+      } else {
+        await api('/api/login', { method: 'POST', body });
+        toast('登入成功，歡迎回來！');
+      }
       await enter();
     } catch (e) {
       $('a-msg').textContent = e.message;
@@ -78,6 +94,7 @@
       if (!chosenTemplate) throw new Error('請先挑一個模板');
       const data = await api('/api/shop', { method: 'POST', body: { name: $('s-name').value.trim(), template: chosenTemplate } });
       applyMe(data);
+      toast('開店成功，開始營業！');
     } catch (e) {
       $('s-msg').textContent = e.message;
     }
@@ -166,6 +183,7 @@
       renderCart();
       $('pos-msg').textContent = '';
       $('pos-submit').textContent = '✓ 已記錄';
+      toast('交易已記錄');
       setTimeout(() => { $('pos-submit').textContent = '完成這筆交易'; }, 1200);
       if (!$('tab-orders').hidden) loadOrders();
       if (!$('tab-report').hidden) loadReport();
