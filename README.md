@@ -5,6 +5,7 @@
 | 應用 | 做什麼 |
 |---|---|
 | [mini-lang-expert/](mini-lang-expert/) | Mini-Lang 專家：LLM 對話（NVIDIA GLM 5.3 Flash）+ 247 字檢查工具循環，含靜態前端（專家聊天頁 + 規則翻譯器） |
+| [aichat/](aichat/) | AI Chat（BYOK）：自帶金鑰的通用聊天室，Worker 只做代理轉發，不儲存任何金鑰，部署後沒有任何 secret |
 
 ## 文件
 

@@ -10,7 +10,10 @@ test-apps/
   doc/              平台知識文件（方案、產品、限制、金流、發佈）
 ```
 
-目前只有一個應用：`mini-lang-expert/`（LLM 對話 + 247 字檢查工具的 Worker）。
+目前有兩個應用：
+
+* `mini-lang-expert/`（LLM 對話 + 247 字檢查工具的 Worker，金鑰是 Worker secret）
+* `aichat/`（BYOK 通用聊天室，金鑰由使用者提供、Worker 只代理轉發，沒有任何 secret）
 
 ## 常用指令
 
@@ -25,16 +28,17 @@ npm run sync                    # 可選：從上游 mini-lm 專案同步前端�
 
 沒有測試框架、沒有 linter。驗證方式：
 
-1. `node --check src/worker.js` 檢查語法
+1. `node --check src/worker.js && node --check public/app.js` 檢查語法
 2. `npx wrangler dev` 起本機後 `curl` 煙霧測試：
-   * `curl localhost:8787/api/status` → 應回 JSON（`key` 是否為 true）
-   * `curl -X POST localhost:8787/api/chat -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"你好"}]}'` → 應回 `data:` 開頭的 SSE 事件
+   * mini-lang-expert：`curl localhost:8787/api/status` → 應回 JSON（`key` 是否為 true）；`POST /api/chat` → 應回 `data:` 開頭的 SSE 事件
+   * aichat：`POST /api/proxy` 帶白名單外的 url → 應回 403；帶 `http://` → 應回 400
 3. 有 `NVIDIA_API_KEY` 時（`.dev.vars`）才測得到真實對話；沒有金鑰時 Worker 應回 `type: error` 事件而不是掛掉
 
 ## 慣例（改動前先讀）
 
-* **應用自包含**：不要讓 `mini-lang-expert/` 引用 repo 外的檔案。上游 mini-lm 專案的資料已經 vendored 進 `public/` 與 `src/generated.js`，是原始檔，直接改。
-* **秘密不進 repo**：金鑰用 `wrangler secret put`（線上）或 `.dev.vars`（本機），兩者都已 gitignore。檢查任何 diff 不含金鑰。
+* **應用自包含**：不要讓應用引用 repo 外的檔案。上游資料（如 mini-lang-expert 的 mini-lm）已經 vendored 進應用資料夾，是原始檔，直接改。
+* **秘密不進 repo**：金鑰用 `wrangler secret put`（線上）或 `.dev.vars`（本機），兩者都已 gitignore。aichat 是 BYOK：金鑰由使用者在瀏覽器輸入，Worker 不存——不要在 Worker 裡加任何儲存金鑰的邏輯。檢查任何 diff 不含金鑰。
+* **代理白名單**：aichat 的 `/api/proxy` 只轉發到 `DEFAULT_HOSTS`（或 `ALLOWED_HOSTS`）裡的主機，改動時不要放寬成任意 URL。
 * **產生物不重造**：`public/`、`src/generated.js` 是原始檔。`sync.py` 只在同步上游時用，它會覆蓋本地修改——不要在沒問使用者的情況下執行。
 * **文件放 `doc/`**：研究出的平台知識（限制、比較、金流、流程）寫成文件加進 `doc/README.md` 索引；文件間的相對連結要驗證有效。
 * **語言**：所有文件與註解用繁體中文。

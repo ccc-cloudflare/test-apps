@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Chat（BYOK）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="head-row">
+    <h1>AI Chat</h1>
+    <span id="model-tag" class="tag"></span>
+    <span class="spacer"></span>
+    <button id="settings-btn" class="ghost">設定</button>
+    <button id="new" class="ghost">新對話</button>
+  </div>
+  <p class="tagline">自帶金鑰（BYOK）：金鑰只存在你的瀏覽器，對話經 Worker 轉發給 LLM 供應商，伺服器不儲存任何東西。</p>
+
+  <details id="settings" class="panel">
+    <summary>設定：供應商、模型與金鑰</summary>
+    <div class="fields">
+      <label>API 端點（OpenAI 相容，不含 /chat/completions）
+        <input id="s-url" type="url" placeholder="https://integrate.api.nvidia.com/v1">
+      </label>
+      <label>模型
+        <input id="s-model" type="text" placeholder="z-ai/glm-5.3-flash">
+      </label>
+      <label>API 金鑰（存在這個瀏覽器的 localStorage）
+        <input id="s-key" type="password" placeholder="nvapi-… / sk-…">
+      </label>
+      <div class="row">
+        <button id="save" class="primary">儲存</button>
+        <span id="s-msg" class="status"></span>
+      </div>
+      <p class="hint">常用端點：NVIDIA <code>https://integrate.api.nvidia.com/v1</code> ·
+        OpenAI <code>https://api.openai.com/v1</code> ·
+        DeepSeek <code>https://api.deepseek.com/v1</code> ·
+        OpenRouter <code>https://openrouter.ai/api/v1</code></p>
+    </div>
+  </details>
+</header>
+
+<div id="chat"><div class="inner" id="messages"></div></div>
+
+<footer>
+  <div class="inner">
+    <div class="composer">
+      <textarea id="input" rows="2" placeholder="輸入訊息…（Enter 送出，Shift+Enter 換行）"></textarea>
+      <button id="send">送出</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

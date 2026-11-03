@@ -1,0 +1,76 @@
+:root {
+  --bg: #f7f6f2; --panel: #ffffff; --text: #1f2328; --muted: #6b7078; --line: #e2e0d9;
+  --accent: #2f6f5e; --user: #e8eef8; --bad: #fde2e2; --bad-line: #d9534f; --code: #f0efea; --rt: #8a6d3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191c; --panel: #1f2226; --text: #e6e6e3; --muted: #9aa0a6; --line: #33373d;
+    --accent: #7cc4ad; --user: #22303f; --bad: #3d2224; --bad-line: #c0504d; --code: #2a2d31; --rt: #d2b47a;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); line-height: 1.7;
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  display: flex; flex-direction: column;
+}
+header { padding: 14px 16px 8px; max-width: 900px; width: 100%; margin: 0 auto; }
+.head-row { display: flex; gap: 8px; align-items: center; }
+h1 { margin: 0; font-size: 1.35rem; }
+.tag { color: var(--muted); font-size: 0.85rem; }
+.spacer { flex: 1; }
+.tagline { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; margin-top: 10px; }
+.panel summary { cursor: pointer; font-weight: 600; }
+.fields { display: grid; gap: 10px; padding: 8px 0; }
+.fields label { display: grid; gap: 4px; font-size: 0.9rem; color: var(--muted); }
+.fields input {
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit;
+  background: var(--bg); color: var(--text);
+}
+.row { display: flex; gap: 10px; align-items: center; }
+.hint { font-size: 0.82rem; color: var(--muted); margin: 0; }
+.hint code { background: var(--code); padding: 0 4px; border-radius: 4px; }
+button.primary { border: 0; background: var(--accent); color: #fff; border-radius: 8px; padding: 7px 14px; font: inherit; cursor: pointer; }
+button.ghost {
+  border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer;
+}
+#chat { flex: 1; overflow-y: auto; }
+.inner { max-width: 900px; margin: 0 auto; padding: 8px 16px 16px; }
+.msg { margin: 14px 0; }
+.msg.user .bubble { background: var(--user); margin-left: auto; max-width: 85%; white-space: pre-wrap; }
+.msg.assistant .bubble { background: var(--panel); border: 1px solid var(--line); }
+.msg.note { color: var(--muted); font-size: 0.85rem; text-align: center; }
+.bubble { border-radius: 12px; padding: 10px 14px; width: fit-content; max-width: 100%; overflow-wrap: anywhere; }
+.bubble p { margin: 0.4em 0; }
+.bubble h1, .bubble h2, .bubble h3 { font-size: 1.05rem; margin: 0.8em 0 0.3em; }
+.bubble ul, .bubble ol { margin: 0.3em 0; padding-left: 1.4em; }
+.bubble table { border-collapse: collapse; margin: 0.5em 0; font-size: 0.92rem; }
+.bubble th, .bubble td { border: 1px solid var(--line); padding: 3px 8px; text-align: left; }
+.bubble code { background: var(--code); border-radius: 4px; padding: 0 4px; font-size: 0.9em; }
+.bubble pre { background: var(--code); border-radius: 8px; padding: 8px 10px; overflow-x: auto; }
+.bubble pre code { background: none; padding: 0; }
+details.thinking { color: var(--muted); font-size: 0.85rem; margin-bottom: 6px; }
+details.thinking summary { cursor: pointer; }
+details.thinking div { white-space: pre-wrap; max-height: 240px; overflow-y: auto; }
+.error { color: var(--bad-line); }
+footer { border-top: 1px solid var(--line); background: var(--bg); }
+footer .inner { padding-top: 10px; padding-bottom: 12px; }
+.composer { display: flex; gap: 8px; align-items: flex-end; }
+textarea {
+  flex: 1; resize: none; min-height: 52px; max-height: 40vh; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; font: inherit; background: var(--panel); color: var(--text); outline-color: var(--accent);
+}
+#send { border: 0; background: var(--accent); color: #fff; border-radius: 10px; padding: 0 18px; height: 52px; font: inherit; font-weight: 600; cursor: pointer; }
+#send.stop { background: var(--bad-line); }
+.status { color: var(--muted); font-size: 0.8rem; margin-top: 6px; }
+@media (max-width: 600px) {
+  .msg.user .bubble { max-width: 100%; }
+  header { padding: 8px 12px 4px; }
+  h1 { font-size: 1.1rem; }
+  .inner { padding-left: 12px; padding-right: 12px; }
+  textarea { min-height: 44px; }
+  #send { height: 44px; padding: 0 14px; }
+}

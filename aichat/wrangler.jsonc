@@ -1,0 +1,19 @@
+// wrangler 設定：https://developers.cloudflare.com/workers/wrangler/configuration/
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aichat",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-11-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // /api/proxy 一定先進 Worker，其他路徑有檔案就直接回靜態檔案
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": {
+    "enabled": true
+  }
+  // BYOK：這個 Worker 沒有任何 secret。想限制可轉發的 LLM 主機時，再設定：
+  // [vars]
+  // ALLOWED_HOSTS = "api.openai.com,api.deepseek.com"
+}
