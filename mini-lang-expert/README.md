@@ -4,7 +4,7 @@
   * https://mini-lang-expert.ccckmit.workers.dev/
   * https://mini-lang-expert.ccckmit.workers.dev/mini-lang-expert
 
-Mini-Lang 專家：用 LLM（NVIDIA 的 GLM 5.3 Flash）回答 Mini-Lang 的問題、翻譯、寫文章，並在 Worker 裡執行 247 字檢查工具的循環。**這個應用是自包含的**：所有前端與資料都在這個資料夾裡，部署不需要其他專案。
+Mini-Lang 專家：用 LLM（NVIDIA 的 GLM 5.3 Flash）回答 Mini-Lang 的問題、翻譯、寫文章，並在 Worker 裡執行字表（297 字）檢查工具的循環。**這個應用是自包含的**：所有前端與資料都在這個資料夾裡，部署不需要其他專案。
 
 | 路徑 | 做什麼 |
 |---|---|

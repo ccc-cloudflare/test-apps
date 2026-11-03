@@ -1,4 +1,4 @@
-// Mini-Lang 翻譯引擎：一般中文 ⇄ Mini-Lang（247 字），以及拼音標注。
+// Mini-Lang 翻譯引擎：一般中文 ⇄ Mini-Lang（297 字），以及拼音標注。
 // 規則來自 mini-lang/universal.md，資料來自 data.js（由 build.py 產生）。
 // 網頁和 Node 測試共用這個檔案。
 

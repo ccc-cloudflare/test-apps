@@ -24,7 +24,9 @@ body {
   font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
   display: flex; flex-direction: column;
 }
-header { padding: 14px 16px 8px; max-width: 900px; width: 100%; margin: 0 auto; }
+header { padding: 14px 16px 8px; max-width: 900px; width: 100%; margin: 0 auto; display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+#clear { flex: none; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 8px; padding: 4px 12px; font: inherit; font-size: 0.88rem; cursor: pointer; }
+#clear:hover { border-color: var(--bad-line); color: var(--bad-line); }
 h1 { margin: 0; font-size: 1.35rem; }
 .tagline { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
 .tagline a { color: var(--accent); }
@@ -94,8 +96,11 @@ textarea {
 </head>
 <body>
 <header>
+  <div>
   <h1>Mini-Lang 專家</h1>
   <p class="tagline">問任何關於 Mini-Lang 的問題，或請它翻譯、寫文章。由 GLM 5.3 Flash 回答。 <a href="index.html">規則翻譯器</a></p>
+  </div>
+  <button id="clear" title="清除所有對話紀錄（也會從瀏覽器刪除）">清除對話</button>
 </header>
 
 <div id="chat"><div class="inner" id="messages"></div></div>
@@ -110,7 +115,6 @@ textarea {
       <button data-task="write">寫一篇文章</button>
       <span class="spacer"></span>
       <label><input type="checkbox" id="pinyin"> 拼音</label>
-      <button id="new">新對話</button>
     </div>
     <div class="composer">
       <textarea id="input" rows="2" placeholder="例如：「醫院」用 Mini-Lang 怎麼說？（Enter 送出，Shift+Enter 換行）"></textarea>
@@ -272,7 +276,7 @@ textarea {
     box.innerHTML = '';
     if (!history.length) {
       box.appendChild(renderMessage({ role: 'assistant', content:
-        '你好，我是 Mini-Lang 專家。你可以：\n\n- 問我任何關於 Mini-Lang 的問題，例如「為什麼只有 247 個字？」「『害怕』怎麼說？」\n- 請我把中文或英文翻成 Mini-Lang，或把 Mini-Lang 翻回中文、英文\n- 請我用 Mini-Lang 寫文章\n\n我寫的 Mini-Lang 會放在綠色框裡，網頁會逐字檢查是不是只用 247 字。' }));
+        '你好，我是 Mini-Lang 專家。你可以：\n\n- 問我任何關於 Mini-Lang 的問題，例如「為什麼只有 297 個字？」「『醫院』怎麼說？」\n- 請我把中文或英文翻成 Mini-Lang，或把 Mini-Lang 翻回中文、英文\n- 請我用 Mini-Lang 寫文章\n\n我寫的 Mini-Lang 會放在綠色框裡，網頁會逐字檢查是不是只用 297 字。' }));
     }
     history.forEach((m, i) => box.appendChild(renderMessage(m, i)));
     $('chat').scrollTop = $('chat').scrollHeight;
@@ -326,7 +330,7 @@ textarea {
         if (Date.now() - last > 150) {
           const stick = atBottom();
           const fresh = renderMessage(reply);
-          box.replaceChild(fresh, node);
+          if (node.parentNode === box) box.replaceChild(fresh, node);  // 清除對話後，這則回答已經不在畫面上
           node = fresh;
           if (stick) $('chat').scrollTop = $('chat').scrollHeight;
           last = Date.now();
@@ -338,7 +342,7 @@ textarea {
       else reply.error = '（已停止）';
     }
     const fresh = renderMessage(reply);
-    box.replaceChild(fresh, node);
+    if (node.parentNode === box) box.replaceChild(fresh, node);
     $('chat').scrollTop = $('chat').scrollHeight;
     setBusy(false);
     $('status').textContent = '';
@@ -386,11 +390,14 @@ textarea {
   }));
   $('pinyin').checked = pinyin;
   $('pinyin').addEventListener('change', (e) => { pinyin = e.target.checked; save(); renderAll(); });
-  $('new').addEventListener('click', () => {
+  // 清除對話：停止正在進行的回答，刪掉瀏覽器裡存的紀錄
+  $('clear').addEventListener('click', () => {
+    if (history.length && !window.confirm('要清除所有對話紀錄嗎？清除後無法復原。')) return;
     if (controller) controller.abort();
     history = [];
-    save();
+    try { localStorage.removeItem('minilang-expert'); } catch (e) { /* 忽略 */ }
     renderAll();
+    $('status').textContent = '已清除對話紀錄。';
   });
 
   fetch('/api/status').then((r) => r.json()).then((s) => {

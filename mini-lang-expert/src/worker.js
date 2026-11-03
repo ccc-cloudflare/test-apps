@@ -21,7 +21,8 @@ const TOOLS = [{
   type: 'function',
   function: {
     name: 'check_minilang',
-    description: '檢查一段 Mini-Lang 文字是否只用 247 字字表內的漢字（數字、標點、英文外來語不算）。'
+    // 字數從字表算，字表更新時不用改這裡
+    description: `檢查一段 Mini-Lang 文字是否只用 ${CHARSET_SET.size} 字字表內的漢字（數字、標點、英文外來語不算）。`
                  + '回傳是否通過、字表外的字出現在哪裡，以及詞典中相關的換法。輸出任何 Mini-Lang 之前都要先用它檢查。',
     parameters: {
       type: 'object',
