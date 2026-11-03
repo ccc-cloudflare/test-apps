@@ -6,6 +6,7 @@
 |---|---|
 | [mini-lang-expert/](mini-lang-expert/) | Mini-Lang 專家：LLM 對話（NVIDIA GLM 5.3 Flash）+ 247 字檢查工具循環，含靜態前端（專家聊天頁 + 規則翻譯器） |
 | [aichat/](aichat/) | AI Chat（BYOK）：自帶金鑰的通用聊天室，Worker 只做代理轉發，不儲存任何金鑰，部署後沒有任何 secret |
+| [myshop/](myshop/) | MyShop 個人商店 POS：註冊登入、開店模板（奶茶/理髮/雜貨/咖啡）、點單、每日結算報表，資料存 D1 |
 
 ## 文件
 

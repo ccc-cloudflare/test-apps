@@ -8,6 +8,7 @@
 |---|---|---|
 | [mini-lang-expert/](../mini-lang-expert/) | Mini-Lang 專家：LLM 對話（NVIDIA GLM）+ 247 字檢查工具的 Worker，含靜態前端。**自包含**，clone 後 `npx wrangler deploy` 即可上線 | [cpu-limit.md](cpu-limit.md)、[workers-vs-linode.md](workers-vs-linode.md)、[payments.md](payments.md) |
 | [aichat/](../aichat/) | AI Chat（BYOK）：自帶金鑰的通用聊天室，Worker 只代理轉發（有供應商白名單）、回應原樣穿透，沒有任何 secret | [cpu-limit.md](cpu-limit.md)、[plans.md](plans.md) |
+| [myshop/](../myshop/) | MyShop 個人商店 POS：帳號（PBKDF2 + HMAC cookie）、開店模板、點單與每日報表，資料存 D1 | [products.md](products.md)、[release.md](release.md) |
 
 ## Cloudflare 文件
 
