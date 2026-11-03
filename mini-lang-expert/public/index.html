@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini-Lang 翻譯器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Mini-Lang 翻譯器</h1>
+  <p class="tagline">在一般中文、英文和只用 247 個漢字的 Mini-Lang 之間翻譯。</p>
+</header>
+
+<main>
+  <div class="toolbar">
+    <label class="lang">從 <select id="src" aria-label="來源語言"></select></label>
+    <button id="swap" class="ghost" title="把結果放回輸入，換方向" aria-label="交換語言">⇄</button>
+    <label class="lang">翻成 <select id="dst" aria-label="目標語言"></select></label>
+    <select id="examples" aria-label="範例">
+      <option value="">載入範例…</option>
+    </select>
+    <label class="switch"><input type="checkbox" id="pinyin"> <span>標注拼音</span></label>
+  </div>
+
+  <div class="panes">
+    <section class="pane">
+      <div class="pane-head">
+        <h2 id="in-label">一般中文</h2>
+        <span class="count" id="in-count"></span>
+      </div>
+      <textarea id="input" spellcheck="false" placeholder="在這裡輸入或貼上文章"></textarea>
+    </section>
+    <section class="pane">
+      <div class="pane-head">
+        <h2 id="out-label">Mini-Lang</h2>
+        <button id="copy" class="ghost small">複製</button>
+      </div>
+      <div id="preview-wrap" hidden>
+        <div class="mini-label">Mini-Lang（拼音）</div>
+        <div id="preview" class="output"></div>
+      </div>
+      <div id="mt-box" class="mt-box" hidden>
+        <p id="mt-msg"></p>
+        <button id="mt-download" class="primary" hidden>下載翻譯模型</button>
+      </div>
+      <div id="busy" class="busy" hidden>翻譯中…</div>
+      <div id="output" class="output" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <div id="stats" class="stats"></div>
+  <ul id="notes" class="notes"></ul>
+
+  <div class="legend">
+    <span><i class="sub">換掉的詞</i> 詞典換掉的詞（滑鼠移上去看原文）</span>
+    <span><i class="alt">有幾種說法</i> 取了第一種，請確認</span>
+    <span><i class="hint">要改寫</i> 要依句子改寫，下方有建議</span>
+    <span><i class="bad">字</i> 字表外、詞典沒有</span>
+  </div>
+
+  <details class="charset">
+    <summary>字表（247 字）</summary>
+    <div id="charset"></div>
+  </details>
+
+  <details class="about">
+    <summary>這個翻譯器怎麼運作</summary>
+    <p>翻譯完全在瀏覽器中進行，不會把文章送到任何伺服器。</p>
+    <p><b>中文 ⇄ Mini-Lang</b> 依規則翻譯。中文 → Mini-Lang 依序做：</p>
+    <ol>
+      <li>中文數字換成阿拉伯數字（二十二歲 → 22歲）。</li>
+      <li>數字後的量詞換成「個」（一隻狗 → 一個狗）。</li>
+      <li>查詞典換詞（醫院 → 看病的地方、狗 → dog），英文外來語第一次出現時加上說明。</li>
+      <li>需要改寫句子結構的詞（雖然、已經…）不自動換，只標出來並給建議。</li>
+    </ol>
+    <p><b>英文</b>用瀏覽器內建的翻譯模型（桌面版 Chrome 138 以上），第一次使用時要先下載模型，之後在本機執行。英文和 Mini-Lang 之間經過中文：Mini-Lang → 中文 → English、English → 中文 → Mini-Lang。</p>
+    <p>依規則的翻譯：結果通常還要人讀一次、改通順。完整規則見 <a href="https://github.com/ccc-claude-opus/mini-lm/blob/main/mini-lang/universal.md">universal.md</a>，範例見 <a href="https://github.com/ccc-claude-opus/mini-lm/blob/main/mini-lang/examples.md">examples.md</a>。</p>
+  </details>
+</main>
+
+<script src="data.js"></script>
+<script src="minilang.js"></script>
+<script src="mt.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

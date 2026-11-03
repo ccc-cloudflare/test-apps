@@ -1,0 +1,13 @@
+{
+  "name": "mini-lang-worker",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "secret": "wrangler secret put NVIDIA_API_KEY",
+    "sync": "python3 sync.py"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

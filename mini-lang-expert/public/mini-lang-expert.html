@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini-Lang 專家</title>
+<style>
+:root {
+  --bg: #f7f6f2; --panel: #ffffff; --text: #1f2328; --muted: #6b7078; --line: #e2e0d9;
+  --accent: #2f6f5e; --accent-soft: #e3efe9; --user: #e8eef8; --bad: #fde2e2; --bad-line: #d9534f;
+  --mini: #f3f8f5; --mini-line: #b9d8cb; --rt: #8a6d3b; --code: #f0efea;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191c; --panel: #1f2226; --text: #e6e6e3; --muted: #9aa0a6; --line: #33373d;
+    --accent: #7cc4ad; --accent-soft: #24352f; --user: #22303f; --bad: #3d2224; --bad-line: #c0504d;
+    --mini: #1c2a25; --mini-line: #33584a; --rt: #d2b47a; --code: #2a2d31;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); line-height: 1.7;
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  display: flex; flex-direction: column;
+}
+header { padding: 14px 16px 8px; max-width: 900px; width: 100%; margin: 0 auto; }
+h1 { margin: 0; font-size: 1.35rem; }
+.tagline { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+.tagline a { color: var(--accent); }
+#chat { flex: 1; overflow-y: auto; }
+.inner { max-width: 900px; margin: 0 auto; padding: 8px 16px 16px; }
+.msg { margin: 14px 0; }
+.msg.user .bubble { background: var(--user); margin-left: auto; max-width: 85%; white-space: pre-wrap; }
+.msg.assistant .bubble { background: var(--panel); border: 1px solid var(--line); }
+.msg.note { color: var(--muted); font-size: 0.85rem; text-align: center; }
+.bubble { border-radius: 12px; padding: 10px 14px; width: fit-content; max-width: 100%; overflow-wrap: anywhere; }
+.bubble p { margin: 0.4em 0; }
+.bubble h1, .bubble h2, .bubble h3 { font-size: 1.05rem; margin: 0.8em 0 0.3em; }
+.bubble ul, .bubble ol { margin: 0.3em 0; padding-left: 1.4em; }
+.bubble table { border-collapse: collapse; margin: 0.5em 0; font-size: 0.92rem; }
+.bubble th, .bubble td { border: 1px solid var(--line); padding: 3px 8px; text-align: left; }
+.bubble code { background: var(--code); border-radius: 4px; padding: 0 4px; font-size: 0.9em; }
+.bubble pre { background: var(--code); border-radius: 8px; padding: 8px 10px; overflow-x: auto; }
+.bubble pre code { background: none; padding: 0; }
+details.thinking { color: var(--muted); font-size: 0.85rem; margin-bottom: 6px; }
+details.thinking summary { cursor: pointer; }
+details.thinking div { white-space: pre-wrap; max-height: 240px; overflow-y: auto; }
+.tools { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--muted); font-size: 0.82rem; margin-bottom: 6px; }
+.tools .ok { color: var(--accent); }
+.tools .warn { color: var(--bad-line); }
+.minilang { background: var(--mini); border: 1px solid var(--mini-line); border-radius: 10px; padding: 8px 12px; margin: 8px 0; }
+.minilang .text { font-size: 1.12rem; line-height: 1.9; white-space: pre-wrap; }
+.minilang .text.pinyin { line-height: 3.1; }
+.minilang .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+.minilang .ok { color: var(--accent); }
+.minilang .warn { color: var(--bad-line); }
+.minilang button { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 6px; padding: 1px 8px; font: inherit; cursor: pointer; }
+.bad { background: var(--bad); box-shadow: inset 0 -2px 0 var(--bad-line); border-radius: 2px; }
+ruby { ruby-position: under; -webkit-ruby-position: after; }
+rt { font-size: 0.62em; color: var(--rt); font-family: system-ui, sans-serif; }
+.loan { position: relative; text-decoration: underline dotted var(--mini-line); text-underline-offset: 3px; cursor: help; outline: none; }
+.loan[data-note]:hover::after, .loan[data-note]:focus::after {
+  content: attr(data-note); position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 10;
+  width: max-content; max-width: min(320px, 80vw); padding: 6px 10px; border-radius: 8px;
+  background: var(--text); color: var(--bg); font-size: 0.85rem; line-height: 1.5; white-space: pre-line;
+}
+footer { border-top: 1px solid var(--line); background: var(--bg); }
+footer .inner { padding-top: 10px; padding-bottom: 12px; }
+.quick { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; overflow-x: auto; scrollbar-width: none; }
+.quick::-webkit-scrollbar { display: none; }
+.quick button, .quick label { flex: none; white-space: nowrap; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 999px; padding: 3px 12px; font: inherit; font-size: 0.88rem; cursor: pointer; }
+.quick label { display: inline-flex; gap: 4px; align-items: center; }
+.quick .spacer { flex: 1; }
+.composer { display: flex; gap: 8px; align-items: flex-end; }
+textarea {
+  flex: 1; resize: none; min-height: 52px; max-height: 40vh; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; font: inherit; background: var(--panel); color: var(--text); outline-color: var(--accent);
+}
+#send { border: 0; background: var(--accent); color: #fff; border-radius: 10px; padding: 0 18px; height: 52px; font: inherit; font-weight: 600; cursor: pointer; }
+#send.stop { background: var(--bad-line); }
+.status { color: var(--muted); font-size: 0.8rem; margin-top: 6px; }
+.error { color: var(--bad-line); }
+@media (max-width: 600px) {
+  .msg.user .bubble { max-width: 100%; }
+  header { padding: 8px 12px 4px; }
+  h1 { font-size: 1.1rem; }
+  .tagline { font-size: 0.8rem; }
+  .inner { padding-left: 12px; padding-right: 12px; }
+  textarea { min-height: 44px; }
+  #send { height: 44px; padding: 0 14px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Mini-Lang 專家</h1>
+  <p class="tagline">問任何關於 Mini-Lang 的問題，或請它翻譯、寫文章。由 GLM 5.3 Flash 回答。 <a href="index.html">規則翻譯器</a></p>
+</header>
+
+<div id="chat"><div class="inner" id="messages"></div></div>
+
+<footer>
+  <div class="inner">
+    <div class="quick">
+      <button data-task="zh">中文 → Mini-Lang</button>
+      <button data-task="mini">Mini-Lang → 中文</button>
+      <button data-task="en">English → Mini-Lang</button>
+      <button data-task="toen">Mini-Lang → English</button>
+      <button data-task="write">寫一篇文章</button>
+      <span class="spacer"></span>
+      <label><input type="checkbox" id="pinyin"> 拼音</label>
+      <button id="new">新對話</button>
+    </div>
+    <div class="composer">
+      <textarea id="input" rows="2" placeholder="例如：「醫院」用 Mini-Lang 怎麼說？（Enter 送出，Shift+Enter 換行）"></textarea>
+      <button id="send">送出</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="minilang.js"></script>
+<script>
+(function () {
+  'use strict';
+  const ML = MiniLang.create(DATA);
+  const $ = (id) => document.getElementById(id);
+  const HAN = /[一-鿿]/;
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const TEMPLATES = {
+    zh: '請把下面的中文翻成 Mini-Lang：\n\n',
+    mini: '請把下面的 Mini-Lang 翻成通順的書面中文：\n\n',
+    en: '請把下面的英文直接翻成 Mini-Lang：\n\n',
+    toen: 'Translate the following Mini-Lang into natural English:\n\n',
+    write: '請用 Mini-Lang 寫一篇文章。\n題目：\n文體：記敘\n長度：大約 200 個漢字\n讀者：剛學中文半年的外國人',
+  };
+  const MAX_FIX = 2;  // 用了字表外的字時，自動請模型修改的次數
+
+  let history = [];
+  let pinyin = false;
+  let controller = null;
+  try {
+    history = JSON.parse(localStorage.getItem('minilang-expert') || '[]');
+    pinyin = localStorage.getItem('minilang-expert-pinyin') === '1';
+  } catch (e) { /* 沒有儲存空間也能用 */ }
+  const save = () => {
+    try {
+      localStorage.setItem('minilang-expert', JSON.stringify(history.slice(-40)));
+      localStorage.setItem('minilang-expert-pinyin', pinyin ? '1' : '0');
+    } catch (e) { /* 忽略 */ }
+  };
+
+  // ---------- Markdown（只支援模型常用的幾種）----------
+  function inline(s) {
+    return esc(s)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>');
+  }
+  function markdown(text, blocks) {
+    const out = [];
+    // 模型有時會在 minilang 區塊外面多包一層 ````text，拿掉外層
+    const lines = text.split('\n').filter((l) => !/^\s*````+\s*[\w-]*\s*$/.test(l));
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      const fence = /^\s*```+\s*([\w-]*)\s*$/.exec(line);
+      if (fence) {
+        const lang = fence[1].toLowerCase();
+        const body = [];
+        i++;
+        while (i < lines.length && !/^\s*```+\s*$/.test(lines[i])) body.push(lines[i++]);
+        i++;
+        if (lang === 'minilang' || lang === 'mini-lang') {
+          out.push(`<div class="minilang" data-block="${blocks.length}"></div>`);
+          blocks.push(body.join('\n'));
+        } else {
+          out.push(`<pre><code>${esc(body.join('\n'))}</code></pre>`);
+        }
+        continue;
+      }
+      if (/^\s*\|.*\|\s*$/.test(line) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || '')) {
+        const row = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => inline(c.trim()));
+        const head = row(line);
+        i += 2;
+        const rows = [];
+        while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) rows.push(row(lines[i++]));
+        out.push(`<table><tr>${head.map((c) => `<th>${c}</th>`).join('')}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</table>`);
+        continue;
+      }
+      const h = /^(#{1,4})\s+(.*)$/.exec(line);
+      if (h) { out.push(`<h3>${inline(h[2])}</h3>`); i++; continue; }
+      if (/^\s*([-*]|\d+\.)\s+/.test(line)) {
+        const ordered = /^\s*\d+\./.test(line);
+        const items = [];
+        while (i < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i])) items.push(lines[i++].replace(/^\s*([-*]|\d+\.)\s+/, ''));
+        const tag = ordered ? 'ol' : 'ul';
+        out.push(`<${tag}>${items.map((x) => `<li>${inline(x)}</li>`).join('')}</${tag}>`);
+        continue;
+      }
+      if (!line.trim()) { i++; continue; }
+      const para = [];
+      while (i < lines.length && lines[i].trim() && !/^\s*(```|#{1,4}\s|[-*]\s|\d+\.\s|\|)/.test(lines[i])) para.push(lines[i++]);
+      if (!para.length) para.push(lines[i++]);
+      out.push(`<p>${para.map(inline).join('<br>')}</p>`);
+    }
+    return out.join('');
+  }
+
+  // ---------- Mini-Lang 區塊：逐字檢查、拼音、外來語說明 ----------
+  function miniBlockHTML(text) {
+    const unknown = new Set(ML.unknownChars(text));
+    const tokens = ML.loanTokens(text).flatMap((t) => (t.type !== 'plain' ? [t]
+      : [...t.text].map((c) => (unknown.has(c) ? { type: 'bad', text: c } : { type: 'plain', text: c }))));
+    const full = tokens.map((t) => t.text).join('');
+    const py = pinyin ? ML.readings(full) : null;
+    let pos = 0;
+    const body = tokens.map((t) => {
+      const chars = [...t.text];
+      const inner = chars.map((c, k) => {
+        const r = py && py[pos + k];
+        return r && HAN.test(c) ? `<ruby>${esc(c)}<rt>${ML.toneMark(r)}</rt></ruby>` : esc(c);
+      }).join('');
+      pos += chars.length;
+      if (t.type === 'bad') return `<span class="bad" title="字表外的字">${inner}</span>`;
+      if (t.loan) return `<span class="loan" tabindex="0" data-note="${esc(`（${t.note}）\n原文：${t.from}`)}">${inner}</span>`;
+      return inner;
+    }).join('');
+    const count = [...text].filter((c) => HAN.test(c)).length;
+    const status = unknown.size
+      ? `<span class="warn">✗ 字表外的字：${esc([...unknown].join('、'))}</span>`
+      : `<span class="ok">✓ 只用字表內的字</span>`;
+    return `<div class="text${pinyin ? ' pinyin' : ''}">${body}</div>
+      <div class="bar"><span>${status}　${count} 字</span><button class="copy">複製</button></div>`;
+  }
+
+  // ---------- 畫出對話 ----------
+  function renderMessage(m, index) {
+    const div = document.createElement('div');
+    div.className = `msg ${m.role}`;
+    if (m.role === 'note') { div.textContent = m.content; return div; }
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    if (m.role === 'user') {
+      bubble.textContent = m.content;
+    } else {
+      const blocks = [];
+      const thinking = m.reasoning ? `<details class="thinking"><summary>模型的思考過程</summary><div>${esc(m.reasoning)}</div></details>` : '';
+      const drafts = m.draft ? `<details class="thinking"><summary>檢查前的草稿</summary><div>${esc(m.draft)}</div></details>` : '';
+      // 模型自己呼叫檢查工具的紀錄
+      const tools = (m.tools || []).length ? `<div class="tools">${m.tools.map((t, k) => (t.ok
+        ? `<span class="ok">🔍 第 ${k + 1} 次檢查：✓ 全部在字表內</span>`
+        : `<span class="warn">🔍 第 ${k + 1} 次檢查：✗ ${esc(t.chars.join('、'))}</span>`)).join('')}</div>` : '';
+      bubble.innerHTML = thinking + tools + drafts + markdown(m.content || '', blocks) + (m.error ? `<p class="error">${esc(m.error)}</p>` : '');
+      bubble.querySelectorAll('.minilang').forEach((el) => {
+        const text = blocks[Number(el.dataset.block)];
+        el.innerHTML = miniBlockHTML(text);
+        el.querySelector('.copy').addEventListener('click', async (e) => {
+          try { await navigator.clipboard.writeText(text); e.target.textContent = '已複製'; } catch (err) { e.target.textContent = '無法複製'; }
+        });
+      });
+    }
+    div.appendChild(bubble);
+    return div;
+  }
+
+  function renderAll() {
+    const box = $('messages');
+    box.innerHTML = '';
+    if (!history.length) {
+      box.appendChild(renderMessage({ role: 'assistant', content:
+        '你好，我是 Mini-Lang 專家。你可以：\n\n- 問我任何關於 Mini-Lang 的問題，例如「為什麼只有 247 個字？」「『害怕』怎麼說？」\n- 請我把中文或英文翻成 Mini-Lang，或把 Mini-Lang 翻回中文、英文\n- 請我用 Mini-Lang 寫文章\n\n我寫的 Mini-Lang 會放在綠色框裡，網頁會逐字檢查是不是只用 247 字。' }));
+    }
+    history.forEach((m, i) => box.appendChild(renderMessage(m, i)));
+    $('chat').scrollTop = $('chat').scrollHeight;
+  }
+
+  // ---------- 呼叫模型 ----------
+  async function ask(fixRound = 0) {
+    const reply = { role: 'assistant', content: '', reasoning: '' };
+    history.push(reply);
+    const box = $('messages');
+    let node = renderMessage(reply);
+    box.appendChild(node);
+    const atBottom = () => $('chat').scrollHeight - $('chat').scrollTop - $('chat').clientHeight < 80;
+
+    controller = new AbortController();
+    setBusy(true);
+    $('status').textContent = '思考中…';
+    try {
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history.filter((m) => m !== reply && (m.role === 'user' || m.role === 'assistant')).map(({ role, content }) => ({ role, content })) }),
+        signal: controller.signal,
+      });
+      if (!resp.ok) throw new Error(`伺服器錯誤 ${resp.status}：${(await resp.text()).slice(0, 200)}`);
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let last = 0;
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop();
+        for (const ev of events) {
+          if (!ev.startsWith('data:')) continue;
+          const msg = JSON.parse(ev.slice(5));
+          if (msg.type === 'reasoning') { reply.reasoning += msg.text; $('status').textContent = '思考中…'; }
+          if (msg.type === 'content') { reply.content += msg.text; $('status').textContent = '回答中…'; }
+          if (msg.type === 'error') reply.error = msg.text;
+          if (msg.type === 'tool') {
+            // 檢查之前寫的內容是草稿，收起來；畫面只留檢查後的回答
+            reply.tools = (reply.tools || []).concat([{ ok: msg.ok, chars: msg.chars }]);
+            if (reply.content.trim()) reply.draft = (reply.draft ? reply.draft + '\n\n' : '') + reply.content;
+            reply.content = '';
+            $('status').textContent = msg.ok ? '檢查通過，整理答案中…' : `檢查發現字表外的字：${msg.chars.join('、')}，修改中…`;
+          }
+        }
+        // 每 150ms 重畫一次，避免太頻繁
+        if (Date.now() - last > 150) {
+          const stick = atBottom();
+          const fresh = renderMessage(reply);
+          box.replaceChild(fresh, node);
+          node = fresh;
+          if (stick) $('chat').scrollTop = $('chat').scrollHeight;
+          last = Date.now();
+        }
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') reply.error = e.message.includes('Failed to fetch')
+        ? '連不上 Worker。請確認已部署，並用 wrangler secret put NVIDIA_API_KEY 設定金鑰。' : e.message;
+      else reply.error = '（已停止）';
+    }
+    const fresh = renderMessage(reply);
+    box.replaceChild(fresh, node);
+    $('chat').scrollTop = $('chat').scrollHeight;
+    setBusy(false);
+    $('status').textContent = '';
+    save();
+
+    // 用了字表外的字：自動請模型只改那幾句
+    const bad = [...new Set((reply.content.match(/```\s*mini-?lang\s*\n([\s\S]*?)```/gi) || [])
+      .flatMap((b) => ML.unknownChars(b.replace(/```\s*mini-?lang\s*\n|```/gi, ''))))];
+    if (bad.length && !reply.error && fixRound < MAX_FIX) {
+      history.push({ role: 'note', content: `綠色框裡用了字表外的字：${bad.join('、')}，自動請它修改…` });
+      history.push({ role: 'user', content: `你的 Mini-Lang 用了字表外的字：${bad.join('、')}。請只修改含有這些字的句子，其他句子一個字都不要動，再給一次完整的 Mini-Lang（放在 minilang 區塊裡）。` });
+      renderAll();
+      await ask(fixRound + 1);
+    }
+  }
+
+  function setBusy(busy) {
+    $('send').textContent = busy ? '停止' : '送出';
+    $('send').classList.toggle('stop', busy);
+  }
+
+  function send() {
+    if (controller && $('send').classList.contains('stop')) { controller.abort(); return; }
+    const text = $('input').value.trim();
+    if (!text) return;
+    history.push({ role: 'user', content: text });
+    $('input').value = '';
+    autosize();
+    renderAll();
+    ask();
+  }
+
+  // ---------- 事件 ----------
+  $('send').addEventListener('click', send);
+  $('input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); }
+  });
+  const autosize = () => { const t = $('input'); t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, window.innerHeight * 0.4) + 'px'; };
+  $('input').addEventListener('input', autosize);
+  document.querySelectorAll('[data-task]').forEach((b) => b.addEventListener('click', () => {
+    $('input').value = TEMPLATES[b.dataset.task];
+    autosize();
+    $('input').focus();
+    $('input').setSelectionRange($('input').value.length, $('input').value.length);
+  }));
+  $('pinyin').checked = pinyin;
+  $('pinyin').addEventListener('change', (e) => { pinyin = e.target.checked; save(); renderAll(); });
+  $('new').addEventListener('click', () => {
+    if (controller) controller.abort();
+    history = [];
+    save();
+    renderAll();
+  });
+
+  fetch('/api/status').then((r) => r.json()).then((s) => {
+    if (!s.key) $('status').innerHTML = '<span class="error">Worker 找不到 NVIDIA_API_KEY。請執行：npx wrangler secret put NVIDIA_API_KEY</span>';
+  }).catch(() => {
+    $('status').innerHTML = '<span class="error">連不上 Worker。請確認已部署，並用 wrangler secret put NVIDIA_API_KEY 設定金鑰。</span>';
+  });
+  renderAll();
+})();
+</script>
+</body>
+</html>

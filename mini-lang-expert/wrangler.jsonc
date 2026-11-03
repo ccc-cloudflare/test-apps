@@ -1,0 +1,21 @@
+// wrangler 設定：https://developers.cloudflare.com/workers/wrangler/configuration/
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mini-lang-expert",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-11-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // /api/* 一定先進 Worker，其他路徑有檔案就直接回靜態檔案
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": {
+    "enabled": true
+  }
+  // 想改提示詞而不用重新部署：開一個 KV namespace，把下面的註解拿掉，
+  // 再執行 npx wrangler kv key put --binding=PROMPTS system_prompt --path prompt.txt
+  // "kv_namespaces": [
+  //   { "binding": "PROMPTS", "id": "把 namespace 的 id 放在這裡" }
+  // ]
+}
