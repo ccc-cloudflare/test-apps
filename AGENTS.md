@@ -15,6 +15,7 @@ test-apps/
 * `mini-lang-expert/`（LLM 對話 + 247 字檢查工具的 Worker，金鑰是 Worker secret）
 * `aichat/`（BYOK 通用聊天室，金鑰由使用者提供、Worker 只代理轉發，沒有任何 secret）
 * `myshop/`（個人商店 POS，用 D1 資料庫 + HMAC session cookie，secret 是 AUTH_SECRET）
+* `friendbook/`（社交短筆記，D1 + KV，secret 是 AUTH_SECRET）
 
 ## 常用指令
 
