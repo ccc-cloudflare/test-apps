@@ -16,6 +16,7 @@ test-apps/
 * `aichat/`（BYOK 通用聊天室，金鑰由使用者提供、Worker 只代理轉發，沒有任何 secret）
 * `myshop/`（個人商店 POS，用 D1 資料庫 + HMAC session cookie，secret 是 AUTH_SECRET）
 * `friendbook/`（社交短筆記，D1 + KV，secret 是 AUTH_SECRET）
+* `markpedia/`（Markdown 維基，條目存 D1，每條有 zh/en 兩版，無 secret）
 
 ## 常用指令
 
@@ -35,6 +36,8 @@ npm run sync                    # 可選：從上游 mini-lm 專案同步前端�
    * mini-lang-expert：`curl localhost:8787/api/status` → 應回 JSON（`key` 是否為 true）；`POST /api/chat` → 應回 `data:` 開頭的 SSE 事件
    * aichat：`POST /api/proxy` 帶白名單外的 url → 應回 403；帶 `http://` → 應回 400
    * myshop：先 `npm run db`（本機建表），`POST /api/signup`（用 cookie jar）→ `/api/me` → `/api/shop` → `/api/orders` → `/api/report`；未登入的 `/api/*` 應回 401
+   * friendbook：先 `npm run db`，`/api/*` 未登入應回 401
+   * markpedia：先 `npm run db`，`/api/entries` → 應回含範例條目的 JSON；`/api/entry/markdown?lang=zh` → 應回 Markdown 原稿；資料表清空後首次請求會自動重灌 `public/seed/`
 3. 有 `NVIDIA_API_KEY` 時（`.dev.vars`）才測得到真實對話；沒有金鑰時 Worker 應回 `type: error` 事件而不是掛掉
 
 ## 慣例（改動前先讀）
